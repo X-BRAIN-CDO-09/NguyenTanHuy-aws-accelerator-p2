@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: day-b-config
+data:
+  APP_ENV: "learning"
+  WEEK: "W8"
+  DAY: "day-b"
