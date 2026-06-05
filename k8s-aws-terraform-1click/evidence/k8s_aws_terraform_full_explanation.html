@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Giải thích chi tiết dự án K8s on AWS — Terraform 1-Click</title>
+  <style>
+    *{box-sizing:border-box} body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f4f7fb;color:#111827;line-height:1.65}
+    header{background:linear-gradient(135deg,#0f172a,#1e293b);color:white;padding:42px 56px}
+    header h1{margin:0;font-size:38px;line-height:1.15} header p{margin:12px 0 0;color:#cbd5e1;font-size:17px}
+    nav{position:sticky;top:0;z-index:10;background:white;border-bottom:1px solid #e2e8f0;padding:12px 28px;overflow-x:auto;white-space:nowrap;box-shadow:0 8px 18px rgba(15,23,42,.05)}
+    nav a{color:#334155;text-decoration:none;font-size:14px;margin-right:18px;font-weight:700} nav a:hover{color:#2563eb}
+    main{max-width:1280px;margin:0 auto;padding:34px 28px 60px}
+    section{background:white;border-radius:18px;padding:30px;margin-bottom:28px;box-shadow:0 10px 28px rgba(15,23,42,.08);border:1px solid rgba(226,232,240,.85)}
+    h2{margin:0 0 18px;font-size:28px;color:#0f172a} h3{margin:22px 0 10px;color:#1e293b;font-size:20px}
+    .pill{border-radius:999px;padding:8px 12px;background:#e0f2fe;color:#075985;font-size:13px;font-weight:700;display:inline-block;margin:5px}
+    .diagram{display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:center;margin:28px 0}
+    .box{width:190px;min-height:116px;border-radius:16px;padding:16px;text-align:center;border:2px solid #dbeafe;background:#eff6ff;display:flex;flex-direction:column;justify-content:center}
+    .box strong{display:block;font-size:18px;color:#2563eb;margin-bottom:6px}.box span{font-size:14px;color:#334155}
+    .aws{background:#fff7ed;border-color:#fed7aa}.aws strong{color:#ea580c}
+    .tls{background:#f5f3ff;border-color:#ddd6fe}.tls strong{color:#7c3aed}
+    .k8s{background:#ecfeff;border-color:#a5f3fc}.k8s strong{color:#0891b2}
+    .app{background:#f0fdf4;border-color:#bbf7d0}.app strong{color:#16a34a}
+    .script{background:#fefce8;border-color:#fde68a}.script strong{color:#a16207}
+    .arrow{font-size:32px;font-weight:bold;color:#64748b}
+    pre{background:#0f172a;color:#e5e7eb;padding:18px;border-radius:14px;overflow-x:auto;line-height:1.5;font-size:14px}
+    code{background:#e2e8f0;color:#0f172a;padding:3px 7px;border-radius:6px;font-size:.92em}
+    table{width:100%;border-collapse:collapse;margin-top:14px;border-radius:12px;overflow:hidden}
+    th,td{border-bottom:1px solid #e2e8f0;padding:14px;text-align:left;vertical-align:top} th{background:#f8fafc;color:#0f172a}
+    .steps{counter-reset:step;display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:18px;margin-top:18px}
+    .step{position:relative;padding:20px 20px 20px 64px;border-radius:14px;background:#f8fafc;border:1px solid #e2e8f0}
+    .step:before{counter-increment:step;content:counter(step);position:absolute;left:18px;top:20px;width:34px;height:34px;border-radius:50%;background:#0f172a;color:white;display:flex;align-items:center;justify-content:center;font-weight:bold}
+    .step h3{margin-top:0;font-size:18px}.note{border-left:6px solid #f59e0b;background:#fffbeb;padding:18px;border-radius:12px;margin:18px 0}
+    .ok{color:#16a34a;font-weight:bold}.bad{color:#dc2626;font-weight:bold}
+    .two-col{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px}.mini-card{background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:18px}
+    footer{text-align:center;padding:28px;color:#64748b}
+  </style>
+</head>
+<body>
+<header>
+  <h1>K8s on AWS — Terraform 1-Click</h1>
+  <p>Trang giải thích chi tiết kiến trúc, luồng chạy, provider, user_data, Docker, Minikube, Kubernetes, ALB và đường đi request.</p>
+  <div>
+    <span class="pill">Terraform</span><span class="pill">AWS Provider</span><span class="pill">TLS Provider</span>
+    <span class="pill">EC2</span><span class="pill">Docker</span><span class="pill">Minikube</span>
+    <span class="pill">Kubernetes</span><span class="pill">AWS ALB thật</span>
+  </div>
+</header>
+
+<nav>
+  <a href="#overview">Tổng quan</a><a href="#architecture">Kiến trúc</a><a href="#providers">2 Provider</a>
+  <a href="#oneclick">Luồng 1-click</a><a href="#userdata">user_data.sh</a><a href="#request">Đường đi request</a>
+  <a href="#k8s">App trong K8s</a><a href="#optimize">Tối ưu</a><a href="#evidence">Evidence</a><a href="#destroy">Destroy</a>
+</nav>
+
+<main>
+<section id="overview">
+<h2>1. Dự án này dùng để làm gì?</h2>
+<p>Dự án dùng Terraform để tự động dựng một hệ thống Kubernetes nhỏ trên AWS. Người dùng chỉ chạy một lệnh <code>bash scripts/up.sh</code>. Terraform tạo hạ tầng AWS, EC2 tự cài Docker, Minikube, Kubernetes, deploy app HTML/CSS vào Pod nginx, sau đó public app ra Internet bằng AWS Application Load Balancer thật.</p>
+<div class="note"><strong>Điểm quan trọng:</strong> app không cài thẳng trên EC2. EC2 chỉ là host để chạy Docker và Minikube. App thật sự chạy trong Kubernetes Pod.</div>
+<table><thead><tr><th>Tiêu chí</th><th>Dự án đáp ứng bằng cách nào?</th><th>Trạng thái</th></tr></thead>
+<tbody>
+<tr><td>1 lệnh từ repo sạch</td><td><code>bash scripts/up.sh</code></td><td class="ok">Đạt</td></tr>
+<tr><td>App chạy trong K8s</td><td>Deployment tạo Pod nginx trong namespace <code>app</code></td><td class="ok">Đạt</td></tr>
+<tr><td>Expose qua ALB thật</td><td>ALB port 80 forward vào EC2 NodePort 30080</td><td class="ok">Đạt</td></tr>
+<tr><td>Có >=2 provider</td><td><code>aws</code> + <code>tls</code></td><td class="ok">Đạt</td></tr>
+<tr><td>Reproducible</td><td>Terraform + user_data tự dựng lại toàn bộ</td><td class="ok">Đạt</td></tr>
+</tbody></table>
+</section>
+
+<section id="architecture">
+<h2>2. Kiến trúc tổng thể</h2>
+<div class="diagram">
+  <div class="box"><strong>User</strong><span>Mở browser<br>gọi ALB URL</span></div><div class="arrow">→</div>
+  <div class="box aws"><strong>AWS ALB</strong><span>Public HTTP<br>Port 80</span></div><div class="arrow">→</div>
+  <div class="box aws"><strong>Target Group</strong><span>Backend<br>EC2:30080</span></div><div class="arrow">→</div>
+  <div class="box aws"><strong>EC2 Ubuntu</strong><span>Host chạy<br>Docker + Minikube</span></div><div class="arrow">→</div>
+  <div class="box k8s"><strong>Minikube</strong><span>K8s cluster<br>Docker driver</span></div><div class="arrow">→</div>
+  <div class="box k8s"><strong>Service</strong><span>NodePort<br>30080</span></div><div class="arrow">→</div>
+  <div class="box app"><strong>Pod nginx</strong><span>Serve<br>HTML/CSS</span></div>
+</div>
+<pre>Internet User
+  → AWS ALB :80
+  → Target Group
+  → EC2 :30080
+  → Minikube Kubernetes Service NodePort 30080
+  → Kubernetes Deployment
+  → Nginx Pod
+  → index.html + style.css</pre>
+</section>
+
+<section id="providers">
+<h2>3. Hai Terraform provider dùng để làm gì?</h2>
+<div class="two-col">
+<div class="mini-card"><h3>AWS Provider</h3><p>Quản lý hạ tầng thật trên AWS: EC2, Security Group, ALB, Target Group, Listener, Key Pair.</p></div>
+<div class="mini-card"><h3>TLS Provider</h3><p>Sinh SSH private/public key trong Terraform. Public key được AWS dùng để tạo EC2 Key Pair.</p></div>
+</div>
+<h3>Hai provider liên kết với nhau như thế nào?</h3>
+<pre>resource "tls_private_key" "minikube" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+resource "aws_key_pair" "minikube" {
+  key_name   = "${var.project_name}-key"
+  public_key = tls_private_key.minikube.public_key_openssh
+}</pre>
+<p>Đây là <strong>wire provider</strong>: output của TLS provider là <code>public_key_openssh</code>, sau đó AWS provider lấy giá trị đó làm input để tạo <code>aws_key_pair</code>.</p>
+<div class="diagram"><div class="box tls"><strong>TLS</strong><span>Tạo SSH key</span></div><div class="arrow">→</div><div class="box aws"><strong>AWS KeyPair</strong><span>Dùng public key</span></div><div class="arrow">→</div><div class="box aws"><strong>EC2</strong><span>SSH bằng private key</span></div></div>
+</section>
+
+<section id="oneclick">
+<h2>4. Khi chạy <code>bash scripts/up.sh</code> thì cái gì chạy trước?</h2>
+<div class="steps">
+<div class="step"><h3>Script bắt đầu</h3><code>up.sh</code> xác định ROOT_DIR, TF_DIR và tạo thư mục <code>.generated</code>.</div>
+<div class="step"><h3>terraform init</h3>Tải provider <code>hashicorp/aws</code> và <code>hashicorp/tls</code>.</div>
+<div class="step"><h3>terraform apply</h3>Tạo TLS key, AWS KeyPair, EC2, Security Group, ALB, Target Group, Listener.</div>
+<div class="step"><h3>TLS chạy</h3><code>tls_private_key.minikube</code> sinh private/public key.</div>
+<div class="step"><h3>AWS tạo EC2</h3>EC2 được gắn <code>user_data.sh</code>; khi boot lần đầu, cloud-init tự chạy file này.</div>
+<div class="step"><h3>user_data.sh chạy trên EC2</h3>Cài Docker, kubectl, Minikube, start Minikube, deploy app vào Kubernetes.</div>
+<div class="step"><h3>up.sh lấy private key</h3>Chạy <code>terraform output -raw private_key_pem</code> và ghi vào <code>.generated/minikube-key</code>.</div>
+<div class="step"><h3>up.sh chờ EC2 sẵn sàng</h3>SSH vào EC2, chạy <code>cloud-init status --wait</code> và kiểm tra <code>/var/log/k8s-app-ready.log</code>.</div>
+<div class="step"><h3>In ALB URL</h3>Khi xong, script in <code>ALB URL</code> để mở web.</div>
+</div>
+<pre>bash scripts/up.sh
+  ├── terraform init
+  ├── terraform apply -auto-approve
+  │     ├── tls_private_key.minikube
+  │     ├── aws_key_pair.minikube
+  │     ├── aws_security_group.*
+  │     ├── aws_instance.minikube
+  │     │     └── cloud-init chạy user_data.sh
+  │     ├── aws_lb.app
+  │     ├── aws_lb_target_group.app
+  │     └── aws_lb_listener.http
+  ├── terraform output -raw private_key_pem > .generated/minikube-key
+  ├── ssh vào EC2 để chờ cloud-init + k8s-app-ready.log
+  └── in ALB URL</pre>
+</section>
+
+<section id="userdata">
+<h2>5. File nào cài Docker, Minikube và Kubernetes?</h2>
+<p>File chịu trách nhiệm cài software trên EC2 là <code>terraform/user_data.sh</code>. File này được AWS EC2 cloud-init chạy tự động khi instance boot lần đầu.</p>
+<h3>5.1 Cài Docker trên EC2</h3>
+<pre>apt-get update
+apt-get install -y ca-certificates conntrack curl docker.io gnupg socat
+systemctl enable --now docker
+usermod -aG docker ubuntu</pre>
+<p>Đoạn này cài Docker Engine, bật Docker service và thêm user <code>ubuntu</code> vào group docker.</p>
+<h3>5.2 Cài kubectl</h3>
+<pre>apt-get install -y kubectl</pre>
+<p><code>kubectl</code> là CLI để gửi lệnh vào Kubernetes API Server.</p>
+<h3>5.3 Cài Minikube</h3>
+<pre>curl -Lo /usr/local/bin/minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+chmod +x /usr/local/bin/minikube</pre>
+<h3>5.4 Start Minikube bằng Docker driver</h3>
+<pre>minikube start   --driver=docker   --container-runtime=docker   --cpus=2   --memory=1800mb   --ports=30080:30080</pre>
+<p>Có, Minikube của dự án chạy trên Docker. Đường đi là:</p>
+<pre>EC2 Ubuntu
+  → Docker Engine
+  → Minikube node/container
+  → Kubernetes cluster
+  → Pod nginx</pre>
+<h3>5.5 Tạo Kubernetes manifest</h3>
+<p><code>user_data.sh</code> tự tạo file <code>/home/ubuntu/html-app.yaml</code>, trong đó có Namespace, ConfigMap, Deployment và Service.</p>
+<h3>5.6 Deploy app vào Kubernetes</h3>
+<pre>kubectl apply -f "$HOME/html-app.yaml"
+kubectl rollout status deployment/html-app -n app --timeout=180s
+kubectl get pods -n app
+kubectl get svc -n app</pre>
+<h3>5.7 Báo hiệu app sẵn sàng</h3>
+<pre>cp /var/log/k8s-app-deploy.log /var/log/k8s-app-ready.log</pre>
+<p>File <code>/var/log/k8s-app-ready.log</code> là dấu hiệu để <code>up.sh</code> biết bootstrap đã xong.</p>
+</section>
+
+<section id="request">
+<h2>6. Đường đi request khi mở website</h2>
+<div class="steps">
+<div class="step"><h3>Browser gọi ALB URL</h3>Người dùng mở URL dạng <code>http://k8s-aws-1click-alb-xxxx.us-east-1.elb.amazonaws.com</code>.</div>
+<div class="step"><h3>ALB nhận HTTP port 80</h3>Security Group của ALB cho phép inbound HTTP từ Internet.</div>
+<div class="step"><h3>Listener forward</h3>Listener port 80 của ALB forward request vào Target Group.</div>
+<div class="step"><h3>Target Group gọi EC2:30080</h3>Target type là instance, port backend là <code>30080</code>.</div>
+<div class="step"><h3>NodePort nhận traffic</h3>Port 30080 là NodePort của Kubernetes Service.</div>
+<div class="step"><h3>Service gọi Pod</h3>Service chọn Pod có label <code>app: html-app</code>.</div>
+<div class="step"><h3>Pod trả HTML/CSS</h3>Nginx trong Pod serve nội dung từ ConfigMap mount vào <code>/usr/share/nginx/html</code>.</div>
+</div>
+</section>
+
+<section id="k8s">
+<h2>7. Vì sao app chạy trong Kubernetes chứ không phải trên EC2?</h2>
+<p>Trên EC2 không cài nginx trực tiếp bằng <code>apt install nginx</code>. Nginx chỉ chạy trong container thuộc Kubernetes Pod:</p>
+<pre>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: html-app
+  namespace: app
+spec:
+  replicas: 2
+  template:
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:alpine</pre>
+<table><thead><tr><th>Kiểu không đạt</th><th>Kiểu dự án đang làm</th></tr></thead>
+<tbody>
+<tr><td class="bad">EC2 chạy nginx trực tiếp</td><td class="ok">Kubernetes Pod chạy nginx</td></tr>
+<tr><td class="bad">ALB trỏ vào app host EC2</td><td class="ok">ALB trỏ vào Service NodePort 30080</td></tr>
+<tr><td class="bad">Không có self-healing</td><td class="ok">Deployment tự tạo lại Pod nếu Pod chết</td></tr>
+</tbody></table>
+<h3>Cách chứng minh</h3>
+<pre>ssh -i .generated/minikube-key ubuntu@&lt;EC2_PUBLIC_IP&gt;
+docker ps
+minikube status
+kubectl get pods -n app
+kubectl get svc -n app</pre>
+</section>
+
+<section id="optimize">
+<h2>8. Vì sao chọn cách này là tối ưu?</h2>
+<table><thead><tr><th>Lựa chọn</th><th>Lợi ích</th></tr></thead>
+<tbody>
+<tr><td>Minikube trên EC2 thay vì EKS</td><td>Rẻ hơn, dễ demo, phù hợp bài lab, vẫn có Kubernetes thật.</td></tr>
+<tr><td>ALB thật thay vì mở port trực tiếp</td><td>Đúng yêu cầu mentor, gần production hơn, có health check và DNS public.</td></tr>
+<tr><td>NodePort 30080</td><td>Dễ nối ALB vào Minikube chạy trên EC2.</td></tr>
+<tr><td>TLS provider tạo SSH key</td><td>Không cần tạo key thủ công, tránh hard-code key, chứng minh provider wiring thật.</td></tr>
+<tr><td>user_data.sh bootstrap EC2</td><td>Repo sạch vẫn dựng lại được, không cần SSH thủ công để cài Docker/Minikube.</td></tr>
+<tr><td>ConfigMap chứa HTML/CSS</td><td>App đơn giản, không cần build Docker image riêng, dễ hiểu và nhanh demo.</td></tr>
+<tr><td>Deployment replicas = 2</td><td>Có thể giải thích self-healing và Kubernetes quản lý Pod.</td></tr>
+</tbody></table>
+</section>
+
+<section id="evidence">
+<h2>9. Evidence nên chụp</h2>
+<table><thead><tr><th>Evidence</th><th>Lệnh / màn hình</th><th>Chứng minh điều gì?</th></tr></thead>
+<tbody>
+<tr><td>1-click deploy</td><td><code>bash scripts/up.sh</code></td><td>Một lệnh dựng toàn bộ dự án.</td></tr>
+<tr><td>Providers</td><td><code>terraform -chdir=terraform providers</code></td><td>Có AWS + TLS provider.</td></tr>
+<tr><td>ALB URL</td><td><code>terraform -chdir=terraform output -raw alb_url</code></td><td>Có ALB thật.</td></tr>
+<tr><td>Browser</td><td>Mở ALB URL</td><td>App public ra Internet.</td></tr>
+<tr><td>Docker EC2</td><td><code>docker ps</code> sau khi SSH vào EC2</td><td>Docker chạy trên EC2.</td></tr>
+<tr><td>Minikube</td><td><code>minikube status</code></td><td>Kubernetes cluster chạy trên EC2.</td></tr>
+<tr><td>Pods</td><td><code>kubectl get pods -n app</code></td><td>App chạy trong Pod.</td></tr>
+<tr><td>Service</td><td><code>kubectl get svc -n app</code></td><td>Service NodePort 30080.</td></tr>
+</tbody></table>
+<pre>ssh -i .generated/minikube-key ubuntu@$(terraform -chdir=terraform output -raw ec2_public_ip)
+
+docker ps
+minikube status
+kubectl get pods -n app
+kubectl get svc -n app</pre>
+</section>
+
+<section id="destroy">
+<h2>10. Destroy để tránh tốn tiền</h2>
+<pre>bash scripts/destroy.sh</pre>
+<p>Kiểm tra còn resource AWS không:</p>
+<pre>aws resourcegroupstaggingapi get-resources   --region us-east-1   --tag-filters Key=Project,Values=k8s-aws-1click   --query "ResourceTagMappingList[*].ResourceARN"   --output text</pre>
+</section>
+</main>
+<footer>K8s on AWS — Terraform 1-Click | AWS + TLS Provider | ALB → EC2 NodePort → Minikube → Kubernetes Pod</footer>
+</body>
+</html>
