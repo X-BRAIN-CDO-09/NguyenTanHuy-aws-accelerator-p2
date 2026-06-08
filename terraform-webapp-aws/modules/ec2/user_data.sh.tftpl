@@ -1,0 +1,20 @@
+#!/bin/bash
+set -euo pipefail
+
+yum update -y
+amazon-linux-extras install nginx1 -y
+systemctl enable nginx
+
+cat > /usr/share/nginx/html/index.html <<'EOF_INDEX'
+${index_html}
+EOF_INDEX
+
+cat > /usr/share/nginx/html/style.css <<'EOF_STYLE'
+${style_css}
+EOF_STYLE
+
+cat > /usr/share/nginx/html/assets.txt <<'EOF_ASSETS'
+Static assets bucket: ${s3_bucket_name}
+EOF_ASSETS
+
+systemctl restart nginx

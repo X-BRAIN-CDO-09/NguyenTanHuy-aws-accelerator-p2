@@ -18,7 +18,7 @@ ALB_URL="$(terraform output -raw alb_url)"
 
 echo "Waiting for EC2 cloud-init to finish..."
 READY=0
-for i in {1..60}; do
+for i in {1..10}; do
   if ssh \
     -o StrictHostKeyChecking=no \
     -o UserKnownHostsFile=/dev/null \
@@ -30,7 +30,7 @@ for i in {1..60}; do
     break
   fi
 
-  echo "Waiting... attempt $i/60"
+  echo "Waiting... attempt $i/10"
   sleep 20
 done
 

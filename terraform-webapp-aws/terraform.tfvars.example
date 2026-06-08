@@ -1,0 +1,17 @@
+project_name = "terraform-webapp"
+aws_region   = "us-east-1"
+
+# Nen thay bang IP public cua ban, vi du: "203.0.113.10/32"
+ssh_cidr = "0.0.0.0/0"
+
+# Neu muon SSH vao EC2, tao/import key pair tren AWS va dien ten key pair vao day.
+# key_name = "my-key-pair"
+
+db_name     = "webappdb"
+db_username = "adminuser"
+
+# Khong commit password that. Co the truyen bang:
+# $env:TF_VAR_db_password="YourStrongPassword123!"
+db_password = "ChangeMe12345!"
+db_instance_class      = "db.t3.micro"
+db_allocated_storage  = 20

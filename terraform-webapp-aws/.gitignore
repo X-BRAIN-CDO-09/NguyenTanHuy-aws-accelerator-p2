@@ -1,0 +1,16 @@
+.terraform/
+terraform.tfstate
+terraform.tfstate.*
+tfplan
+*.tfplan
+*.auto.tfvars
+terraform.tfvars
+backend.tf
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.DS_Store
+Thumbs.db

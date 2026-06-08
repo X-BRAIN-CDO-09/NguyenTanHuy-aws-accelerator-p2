@@ -1,0 +1,12 @@
+# Copy file nay thanh backend.tf sau khi da tao S3 bucket va DynamoDB table cho remote state.
+# Khong commit backend.tf chua thong tin that neu project dung chung voi nhieu nguoi.
+
+terraform {
+  backend "s3" {
+    bucket         = "your-terraform-state-bucket-name"
+    key            = "terraform-webapp-aws/terraform.tfstate"
+    region         = "us-east-1"
+    dynamodb_table = "your-terraform-lock-table-name"
+    encrypt        = true
+  }
+}
