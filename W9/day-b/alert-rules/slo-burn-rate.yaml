@@ -1,0 +1,37 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: w9-slo-burn-rate
+  namespace: monitoring
+  labels:
+    role: alert-rules
+spec:
+  groups:
+    - name: w9-demo-slo
+      rules:
+        - alert: HighErrorBudgetBurnFast
+          expr: |
+            (
+              sum(rate(http_requests_total{status=~"5.."}[5m]))
+              /
+              sum(rate(http_requests_total[5m]))
+            ) > (14.4 * 0.01)
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: W9 demo app is burning error budget quickly
+            description: Fast burn alert for a 99% availability SLO using a 5m window.
+        - alert: HighErrorBudgetBurnSlow
+          expr: |
+            (
+              sum(rate(http_requests_total{status=~"5.."}[30m]))
+              /
+              sum(rate(http_requests_total[30m]))
+            ) > (6 * 0.01)
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: W9 demo app is burning error budget steadily
+            description: Slow burn alert for a 99% availability SLO using a 30m window.

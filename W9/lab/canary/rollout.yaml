@@ -1,0 +1,47 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: w9-demo-rollout
+  namespace: w9-demo
+  labels:
+    app: w9-demo-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: w9-demo-app
+  template:
+    metadata:
+      labels:
+        app: w9-demo-app
+    spec:
+      containers:
+        - name: w9-demo-app
+          image: ghcr.io/YOUR_GITHUB_USERNAME/w9-demo-app:v1
+          ports:
+            - containerPort: 5000
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 20
+  strategy:
+    canary:
+      steps:
+        - setWeight: 10
+        - pause:
+            duration: 1m
+        - analysis:
+            templates:
+              - templateName: w9-success-rate
+        - setWeight: 50
+        - pause:
+            duration: 1m
+        - setWeight: 100

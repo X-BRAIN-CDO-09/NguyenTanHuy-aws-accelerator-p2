@@ -1,0 +1,26 @@
+name: W9 CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install requirements
+        run: pip install -r app/requirements.txt
+
+      - name: Compile Python files
+        run: python -m compileall app
+
+      - name: Build Docker image
+        run: docker build -t w9-demo-app:test ./app
