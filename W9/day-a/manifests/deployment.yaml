@@ -17,8 +17,8 @@ spec:
     spec:
       containers:
         - name: w9-demo-app
-          image: ghcr.io/YOUR_GITHUB_USERNAME/w9-demo-app:v1
-          imagePullPolicy: IfNotPresent
+          image: w9-demo-app:test
+          imagePullPolicy: Never
           ports:
             - containerPort: 5000
           readinessProbe:

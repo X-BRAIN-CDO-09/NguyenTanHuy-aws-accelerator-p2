@@ -53,7 +53,7 @@ Can chup:
 - [ ] Man hinh tab `Actions` co workflow `W9 CI`.
 - [ ] Run co dau tick xanh.
 - [ ] Cac step: `Checkout`, `Set up Python`, `Install requirements`, `Compile Python files`, `Build Docker image`.
-
+![alt text](image-1.png)
 ## 4. Kubernetes evidence neu co cluster
 
 Tu thu muc `E:\cloud\W9`, chay:
@@ -76,7 +76,7 @@ Can chup:
 - [ ] `kubectl describe deploy` thay readinessProbe/livenessProbe goi `/health`.
 
 Neu image placeholder chua thay bang image that, pod co the bi `ImagePullBackOff`. Khi do chup YAML va noi voi mentor: manifest da dung placeholder de thay image sau.
-
+![alt text](image-2.png)
 ## 5. Test app neu pod da Running
 
 Chay:
@@ -92,7 +92,7 @@ curl http://localhost:8080/
 curl http://localhost:8080/health
 curl http://localhost:8080/metrics
 ```
-
+![alt text](image-3.png)
 Can chup:
 
 - [ ] `/` tra ve `BudgetBot W9 Demo v1`.
