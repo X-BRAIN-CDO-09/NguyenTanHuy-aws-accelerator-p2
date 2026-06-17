@@ -1,0 +1,43 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: developer-workload-manager-binding
+  namespace: apps-dev
+subjects:
+  - kind: ServiceAccount
+    # Gắn quyền developer trong namespace apps-dev.
+    name: developer
+    namespace: apps-dev
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: developer-workload-manager
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: sre-platform-admin-binding
+subjects:
+  - kind: ServiceAccount
+    # SRE có quyền quản trị cao trên toàn cluster cho tình huống vận hành.
+    name: sre
+    namespace: apps-prod
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: sre-platform-admin
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: platform-readonly-viewer-binding
+subjects:
+  - kind: ServiceAccount
+    # Viewer có quyền đọc toàn cluster để audit.
+    name: viewer
+    namespace: apps-prod
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: platform-readonly-viewer
+

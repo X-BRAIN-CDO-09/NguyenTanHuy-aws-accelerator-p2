@@ -1,0 +1,13 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: sre-platform-admin
+rules:
+  - apiGroups: ["*"]
+    # SRE cần quyền rộng để khắc phục sự cố liên namespace.
+    resources: ["*"]
+    verbs: ["*"]
+  - nonResourceURLs: ["*"]
+    # Cho phép truy cập endpoint không thuộc resource khi cần debug API server.
+    verbs: ["get"]
+

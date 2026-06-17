@@ -1,0 +1,13 @@
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sRequiredResourceLimits
+metadata:
+  name: require-container-resource-limits
+spec:
+  # dryrun phù hợp giai đoạn đầu để đo tác động trước khi enforce.
+  enforcementAction: dryrun
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
+    namespaces: ["apps-dev", "apps-prod"]
+

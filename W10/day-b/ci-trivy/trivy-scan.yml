@@ -1,0 +1,46 @@
+name: trivy-image-scan
+
+on:
+  # Scan mọi thay đổi đi vào main qua push hoặc pull request.
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  # Cho phép chạy thủ công khi cần verify lại một image.
+  workflow_dispatch:
+
+jobs:
+  trivy:
+    name: Scan container image
+    runs-on: ubuntu-latest
+    permissions:
+      # Chỉ cần đọc source và ghi security event/report.
+      contents: read
+      security-events: write
+    env:
+      # Trong production nên thay bằng image đã build theo digest hoặc tag release.
+      IMAGE_REF: ghcr.io/example/platform-api:${{ github.sha }}
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          # Scan image container thay vì chỉ scan filesystem.
+          image-ref: ${{ env.IMAGE_REF }}
+          format: table
+          output: trivy-report.txt
+          # HIGH và CRITICAL là ngưỡng chặn pipeline.
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+
+      - name: Upload Trivy report
+        # Upload report kể cả khi bước scan fail để reviewer có evidence.
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-report
+          path: trivy-report.txt
+          retention-days: 14

@@ -1,0 +1,16 @@
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sRequiredLabels
+metadata:
+  name: require-standard-workload-labels
+spec:
+  # dryrun là audit mode: Gatekeeper ghi nhận vi phạm nhưng chưa chặn request.
+  enforcementAction: dryrun
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
+    namespaces: ["apps-dev", "apps-prod"]
+  parameters:
+    # Các label này hỗ trợ ownership, cost allocation và incident response.
+    labels: ["app.kubernetes.io/name", "app.kubernetes.io/owner", "environment"]
+

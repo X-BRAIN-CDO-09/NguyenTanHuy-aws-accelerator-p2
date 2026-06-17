@@ -1,0 +1,10 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: platform-readonly-viewer
+rules:
+  - apiGroups: ["*"]
+    # Viewer chỉ quan sát tài nguyên, không được thay đổi trạng thái cluster.
+    resources: ["*"]
+    verbs: ["get", "list", "watch"]
+

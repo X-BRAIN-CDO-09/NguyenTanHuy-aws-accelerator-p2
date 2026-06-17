@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: platform-prod-quota
+  namespace: platform-prod
+spec:
+  hard:
+    # Giới hạn tổng CPU request để tránh overcommit quá mức trong namespace.
+    requests.cpu: "8"
+    # Giới hạn tổng memory request cho capacity planning.
+    requests.memory: 16Gi
+    # Giới hạn CPU tối đa workload được phép tiêu thụ.
+    limits.cpu: "16"
+    # Giới hạn memory tối đa workload được phép tiêu thụ.
+    limits.memory: 32Gi
+    # Giới hạn số Pod để giảm rủi ro runaway deployment.
+    pods: "40"
+    # Giới hạn số Service LoadBalancer để kiểm soát chi phí cloud.
+    services.loadbalancers: "2"
+

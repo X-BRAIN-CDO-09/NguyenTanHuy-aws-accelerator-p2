@@ -1,0 +1,30 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: verify-platform-images
+spec:
+  # Enforce giúp chặn Pod dùng image chưa có chữ ký hợp lệ.
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: require-cosign-signature
+      match:
+        any:
+          - resources:
+              kinds: ["Pod"]
+              namespaces: ["apps-prod"]
+      verifyImages:
+        - imageReferences:
+            # Chỉ áp dụng cho image production của platform team.
+            - "ghcr.io/example/platform-*:*"
+          mutateDigest: true
+          verifyDigest: true
+          required: true
+          attestors:
+            - entries:
+                - keyless:
+                    # Issuer OIDC của GitHub Actions.
+                    issuer: https://token.actions.githubusercontent.com
+                    # Subject cần khớp workflow ký image.
+                    subject: https://github.com/example/platform/.github/workflows/release.yml@refs/heads/main
+

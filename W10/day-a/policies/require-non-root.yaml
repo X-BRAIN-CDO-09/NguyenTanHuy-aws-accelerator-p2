@@ -1,0 +1,13 @@
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sRequiredSecurityContext
+metadata:
+  name: require-non-root-containers
+spec:
+  # deny là enforce mode: request không đạt chuẩn sẽ bị admission từ chối.
+  enforcementAction: deny
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
+    namespaces: ["apps-dev", "apps-prod"]
+

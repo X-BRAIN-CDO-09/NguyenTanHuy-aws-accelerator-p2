@@ -1,0 +1,37 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: platform-prod-default-deny-and-dns
+  namespace: platform-prod
+spec:
+  # Áp dụng cho toàn bộ Pod trong namespace.
+  podSelector: {}
+  # Chặn ingress và egress mặc định, sau đó mở đúng luồng cần thiết.
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              # Chỉ namespace ingress-nginx được gọi vào workload production.
+              kubernetes.io/metadata.name: ingress-nginx
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              # Cho phép DNS tới kube-system.
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    - to:
+        - ipBlock:
+            # Ví dụ CIDR private của database subnet production.
+            cidr: 10.20.0.0/16
+      ports:
+        - protocol: TCP
+          port: 5432
+

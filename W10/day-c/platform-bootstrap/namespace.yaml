@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: platform-prod
+  labels:
+    # Label environment giúp policy engine áp dụng rule production.
+    environment: prod
+    # Owner hỗ trợ escalation khi có incident hoặc cost anomaly.
+    owner: platform-team
+    # Pod Security Admission mức baseline chặn nhiều cấu hình nguy hiểm phổ biến.
+    pod-security.kubernetes.io/enforce: baseline
+    # Audit restricted để thấy workload nào chưa đạt chuẩn nghiêm ngặt hơn.
+    pod-security.kubernetes.io/audit: restricted
+    # Warn restricted để developer thấy cảnh báo khi apply manifest.
+    pod-security.kubernetes.io/warn: restricted
+

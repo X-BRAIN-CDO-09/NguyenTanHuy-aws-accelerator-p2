@@ -1,0 +1,19 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: developer-workload-manager
+  namespace: apps-dev
+rules:
+  - apiGroups: ["", "apps", "batch"]
+    # Developer được tạo và cập nhật workload thông thường.
+    resources: ["pods", "pods/log", "services", "configmaps", "deployments", "replicasets", "jobs", "cronjobs"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: [""]
+    # Cho phép đọc event để tự kiểm tra lỗi deploy.
+    resources: ["events"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    # Cố ý chỉ cho đọc RBAC, không có create/update/delete.
+    resources: ["roles", "rolebindings"]
+    verbs: ["get", "list", "watch"]
+

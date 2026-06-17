@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: platform-prod-defaults
+  namespace: platform-prod
+spec:
+  limits:
+    - type: Container
+      # CPU request mặc định cho container không khai báo request.
+      defaultRequest:
+        cpu: 100m
+        memory: 128Mi
+      # Limit mặc định giúp tránh container chiếm toàn bộ node.
+      default:
+        cpu: 500m
+        memory: 512Mi
+      # CPU tối thiểu để tránh request quá nhỏ làm scheduler thiếu tín hiệu.
+      min:
+        cpu: 50m
+        memory: 64Mi
+      # Limit tối đa cho một container trong namespace production này.
+      max:
+        cpu: "2"
+        memory: 4Gi
+
